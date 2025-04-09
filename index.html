@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravity Grid</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="gravity_grid.js" defer></script>
+</head>
+<body>
+    <audio id="background-music" loop>
+        <source src="background-music.mp3" type="audio/mpeg">
+    </audio>
+    <button id="music-toggle" class="music-button">🔊</button>
+    <div id="start-screen" class="screen">
+        <img src="game-logo.png" alt="Game Logo" class="logo">
+        <h1>Welcome to Gravity Grid</h1>
+        <label for="player1-name">Player 1 Name:</label>
+        <input type="text" id="player1-name" placeholder="Blue">
+        <label for="player2-name">Player 2 Name:</label>
+        <input type="text" id="player2-name" placeholder="Green">
+        <label for="rounds">Select Rounds:</label>
+        <select id="rounds">
+            <option value="10">10</option>
+            <option value="20" selected>20</option>
+            <option value="30">30</option>
+            <option value="unlimited">Unlimited</option>
+        </select>
+        <button id="start-button">Start Game</button>
+    </div>
+
+    <div id="game" class="screen hidden">
+        <div id="board"></div>
+        <div id="info">
+            <div class="player-info" id="blue-info">
+                <span class="player-color blue"></span>
+                <span id="blue-name"></span>
+                <p>Score: <span id="blue-score">0</span></p>
+                <p class="turns-left">Turns Left: <span id="blue-turns">20</span></p>
+            </div>
+            <div class="player-info" id="green-info">
+                <span class="player-color green"></span>
+                <span id="green-name"></span>
+                <p>Score: <span id="green-score">0</span></p>
+                <p class="turns-left">Turns Left: <span id="green-turns">20</span></p>
+            </div>
+        </div>
+        <p>Current Player: <span id="current-player">Blue</span></p>
+        <button id="restart">Restart Game</button>
+    </div>
+</body>
+</html>

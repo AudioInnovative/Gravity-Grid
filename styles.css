@@ -1,0 +1,165 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #222;
+    color: #eee;
+}
+
+#game {
+    text-align: center;
+}
+
+#board {
+    display: grid;
+    grid-template-columns: repeat(7, 60px);
+    grid-gap: 10px;
+    justify-content: center;
+    align-items: center;
+    background-color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    margin: 20px 0;
+}
+
+#board div {
+    width: 60px;
+    height: 60px;
+    background-color: #444;
+    border-radius: 50%;
+    transition: transform 0.5s ease-in-out, background-color 0.3s ease;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+#board div.blue {
+    background-color: #1E90FF !important; /* Metallic Blue */
+}
+
+#board div.green {
+    background-color: #32CD32 !important; /* Lime Green */
+}
+
+.cascade {
+    transform: translateY(20px);
+}
+
+#info {
+    display: flex;
+    justify-content: center;
+    gap: 100px;
+    margin-top: 20px;
+}
+
+.player-info {
+    text-align: center;
+    margin: 0 20px;
+    flex: 0 0 150px;
+}
+
+.player-info#blue-info {
+    color: #1E90FF; /* Match the blue tile color */
+}
+
+.player-info#green-info {
+    color: #32CD32; /* Match the green tile color */
+}
+
+.player-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.player-color.red {
+    background-color: #FF0000;
+}
+
+.player-color.black {
+    background-color: #000000;
+}
+
+.screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+.hidden {
+    display: none;
+}
+
+.logo {
+    width: 400px;
+    margin-bottom: 20px;
+}
+
+button {
+    background-color: #444;
+    color: #eee;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #666;
+}
+
+#rounds {
+    margin-bottom: 20px;
+}
+
+#blue-name, #green-name {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.music-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(145deg, #2a2a2a, #333333);
+    border: 2px solid #444;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 1000;
+    border-radius: 50%;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3),
+                -5px -5px 15px rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    color: #1E90FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.music-button:hover {
+    transform: scale(1.1);
+    box-shadow: 6px 6px 18px rgba(0, 0, 0, 0.4),
+                -6px -6px 18px rgba(255, 255, 255, 0.08);
+}
+
+.music-button:active {
+    transform: scale(0.95);
+    box-shadow: inset 3px 3px 7px rgba(0, 0, 0, 0.4),
+                inset -3px -3px 7px rgba(255, 255, 255, 0.1);
+}
+
+.music-button.muted {
+    color: #666;
+    border-color: #333;
+    background: linear-gradient(145deg, #252525, #2d2d2d);
+    opacity: 0.8;
+}
