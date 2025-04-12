@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gravity Grid</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="styles.css">
     <script type="module" src="gravity_grid.js" defer></script>
 </head>
@@ -15,17 +16,40 @@
     <div id="start-screen" class="screen">
         <img src="game-logo.png" alt="Game Logo" class="logo">
         <h1>Welcome to Gravity Grid</h1>
-        <label for="player1-name">Player 1 Name:</label>
-        <input type="text" id="player1-name" placeholder="Blue">
-        <label for="player2-name">Player 2 Name:</label>
-        <input type="text" id="player2-name" placeholder="Green">
-        <label for="rounds">Select Rounds:</label>
-        <select id="rounds">
-            <option value="10">10</option>
-            <option value="20" selected>20</option>
-            <option value="30">30</option>
-            <option value="unlimited">Unlimited</option>
-        </select>
+        <div class="game-mode-select">
+            <label>Game Mode:</label>
+            <select id="game-mode">
+                <option value="human">Human vs Human</option>
+                <option value="ai">Human vs AI</option>
+            </select>
+        </div>
+        <div id="player-inputs">
+            <div class="player-input">
+                <label for="player1-name">Player 1 Name:</label>
+                <input type="text" id="player1-name" placeholder="Blue">
+            </div>
+            <div class="player-input">
+                <label for="player2-name">Player 2 Name:</label>
+                <input type="text" id="player2-name" placeholder="Green">
+            </div>
+        </div>
+        <div class="game-options">
+            <label for="rounds">Select Rounds:</label>
+            <select id="rounds">
+                <option value="10">10</option>
+                <option value="20" selected>20</option>
+                <option value="30">30</option>
+                <option value="unlimited">Unlimited</option>
+            </select>
+            <div id="ai-options" class="hidden">
+                <label for="ai-difficulty">AI Difficulty:</label>
+                <select id="ai-difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+        </div>
         <button id="start-button">Start Game</button>
     </div>
 

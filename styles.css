@@ -163,3 +163,52 @@ button:hover {
     background: linear-gradient(145deg, #252525, #2d2d2d);
     opacity: 0.8;
 }
+
+.game-mode-select,
+.game-options {
+    margin: 15px 0;
+    text-align: center;
+}
+
+.player-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.player-input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+#ai-options {
+    margin-top: 15px;
+    transition: opacity 0.3s ease;
+}
+
+#ai-options.hidden {
+    display: none;
+}
+
+select {
+    background-color: #444;
+    color: #eee;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 5px 0;
+}
+
+select:hover {
+    background-color: #555;
+}
+
+select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #1E90FF;
+}
