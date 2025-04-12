@@ -1,0 +1,24 @@
+{
+  "name": "gravity-grid",
+  "version": "1.0.0",
+  "main": "gravity_grid.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AudioInnovative/Gravity-Grid.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AudioInnovative/Gravity-Grid/issues"
+  },
+  "homepage": "https://github.com/AudioInnovative/Gravity-Grid#readme",
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
