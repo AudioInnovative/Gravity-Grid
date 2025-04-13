@@ -12,8 +12,11 @@ let totalTurns = 40;
 let player1Name = 'Blue';
 let player2Name = 'Green';
 let isAIMode = false;
-let aiDifficulty = 'medium';
-let isAITurn = false;
+let isAIvsAI = false;
+let ai1Difficulty = 'easy';
+let ai2Difficulty = 'easy';
+let isAnimating = false;
+let lastDropPosition = null;
 let isMusicPlaying = false;
 
 // Wait for DOM to be fully loaded before accessing elements
@@ -60,25 +63,75 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Add game mode change handler
+    // Update the game mode change handler
     if (elements.gameModeSelect) {
         elements.gameModeSelect.addEventListener('change', (e) => {
-            isAIMode = e.target.value === 'ai';
-            console.log('Game mode changed to:', isAIMode ? 'AI' : 'Human');
+            const mode = e.target.value;
+            isAIMode = mode === 'ai';
+            isAIvsAI = mode === 'ai-vs-ai';
+            console.log('Game mode changed to:', mode);
             
-            if (elements.aiOptions) {
-                elements.aiOptions.classList.toggle('hidden', !isAIMode);
+            // Get all option containers
+            const aiOptions = document.getElementById('ai-options');
+            const ai2Option = document.querySelector('.ai2-option');
+            const player1Input = document.getElementById('player1-name');
+            const player2Input = document.getElementById('player2-name');
+            
+            // First hide all AI options
+            if (aiOptions) {
+                aiOptions.classList.add('hidden');
+            }
+            if (ai2Option) {
+                ai2Option.classList.add('hidden');
             }
             
-            const player2Container = document.querySelector('.player-input:nth-child(2)');
-            if (player2Container) {
-                player2Container.classList.toggle('hidden', isAIMode);
-                if (isAIMode) {
-                    player2Name = 'AI';
-                    const player2Input = document.getElementById('player2-name');
-                    if (player2Input) {
-                        player2Input.value = 'AI';
-                    }
+            // Then show relevant options based on mode
+            if (mode === 'ai') {
+                // Human vs AI mode
+                if (aiOptions) {
+                    aiOptions.classList.remove('hidden');
+                    const ai1Label = document.querySelector('label[for="ai1-difficulty"]');
+                    if (ai1Label) ai1Label.textContent = 'AI Difficulty:';
+                }
+                
+                if (player1Input && player2Input) {
+                    player1Input.disabled = false;
+                    player1Input.value = '';
+                    player1Input.placeholder = 'Blue';
+                    
+                    player2Input.value = 'AI';
+                    player2Input.disabled = true;
+                    ai2Difficulty = document.getElementById('ai1-difficulty').value;
+                    ai1Difficulty = 'none';
+                }
+            } else if (mode === 'ai-vs-ai') {
+                // AI vs AI mode
+                if (aiOptions) {
+                    aiOptions.classList.remove('hidden');
+                    if (ai2Option) ai2Option.classList.remove('hidden');
+                    const ai1Label = document.querySelector('label[for="ai1-difficulty"]');
+                    if (ai1Label) ai1Label.textContent = 'AI 1 Difficulty:';
+                }
+                
+                if (player1Input && player2Input) {
+                    player1Input.value = 'AI 1';
+                    player2Input.value = 'AI 2';
+                    player1Input.disabled = true;
+                    player2Input.disabled = true;
+                    ai1Difficulty = document.getElementById('ai1-difficulty').value;
+                    ai2Difficulty = document.getElementById('ai2-difficulty').value;
+                }
+            } else {
+                // Human vs Human mode
+                if (player1Input && player2Input) {
+                    player1Input.disabled = false;
+                    player2Input.disabled = false;
+                    player1Input.value = '';
+                    player2Input.value = '';
+                    player1Input.placeholder = 'Blue';
+                    player2Input.placeholder = 'Green';
+                    ai1Difficulty = 'none';
+                    ai2Difficulty = 'none';
                 }
             }
         });
@@ -127,9 +180,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function updateTurns(elements) {
-    const turnsPerPlayer = totalTurns / 2;
-    const blueTurns = currentPlayer === player1Name ? Math.ceil(turnsPerPlayer) : Math.floor(turnsPerPlayer);
-    const greenTurns = currentPlayer === player2Name ? Math.ceil(turnsPerPlayer) : Math.floor(turnsPerPlayer);
+    if (!elements.blueTurnsDisplay || !elements.greenTurnsDisplay) return;
+    
+    // Handle unlimited turns
+    if (totalTurns === 999) {
+        elements.blueTurnsDisplay.textContent = '∞';
+        elements.greenTurnsDisplay.textContent = '∞';
+        return;
+    }
+    
+    // Calculate turns for each player
+    const turnsPerPlayer = Math.max(0, totalTurns) / 2;
+    const blueTurns = Math.max(0, currentPlayer === player1Name ? Math.ceil(turnsPerPlayer) : Math.floor(turnsPerPlayer));
+    const greenTurns = Math.max(0, currentPlayer === player2Name ? Math.ceil(turnsPerPlayer) : Math.floor(turnsPerPlayer));
+    
+    // Update display
     elements.blueTurnsDisplay.textContent = blueTurns;
     elements.greenTurnsDisplay.textContent = greenTurns;
 }
@@ -143,19 +208,27 @@ function startGame(elements) {
     const player1Input = document.getElementById('player1-name');
     const player2Input = document.getElementById('player2-name');
     const gameModeSelect = document.getElementById('game-mode');
-    const aiDifficultySelect = document.getElementById('ai-difficulty');
+    const ai1DifficultySelect = document.getElementById('ai1-difficulty');
+    const ai2DifficultySelect = document.getElementById('ai2-difficulty');
     const roundsSelect = document.getElementById('rounds');
     const backgroundMusic = document.getElementById('background-music');
     const musicToggle = document.getElementById('music-toggle');
 
-    player1Name = player1Input ? player1Input.value || 'Blue' : 'Blue';
-    isAIMode = gameModeSelect ? gameModeSelect.value === 'ai' : false;
+    const gameMode = gameModeSelect ? gameModeSelect.value : 'human';
+    isAIMode = gameMode === 'ai';
+    isAIvsAI = gameMode === 'ai-vs-ai';
 
-    if (isAIMode) {
+    if (isAIvsAI) {
+        player1Name = 'AI 1';
+        player2Name = 'AI 2';
+        ai1Difficulty = ai1DifficultySelect ? ai1DifficultySelect.value : 'easy';
+        ai2Difficulty = ai2DifficultySelect ? ai2DifficultySelect.value : 'easy';
+    } else if (isAIMode) {
+        player1Name = player1Input ? player1Input.value || 'Blue' : 'Blue';
         player2Name = 'AI';
-        aiDifficulty = aiDifficultySelect ? aiDifficultySelect.value : 'medium';
-        console.log('Starting game in AI mode with difficulty:', aiDifficulty);
+        ai2Difficulty = ai1DifficultySelect ? ai1DifficultySelect.value : 'easy';
     } else {
+        player1Name = player1Input ? player1Input.value || 'Blue' : 'Blue';
         player2Name = player2Input ? player2Input.value || 'Green' : 'Green';
     }
 
@@ -193,6 +266,13 @@ function startGame(elements) {
     updateTurns(elements);
     elements.startScreen.classList.add('hidden');
     elements.gameScreen.classList.remove('hidden');
+
+    // Trigger first AI move in AI vs AI mode
+    if (isAIvsAI) {
+        setTimeout(() => {
+            makeAIMove(elements);
+        }, 1000);
+    }
 }
 
 function createBoard(elements) {
@@ -209,21 +289,42 @@ function createBoard(elements) {
 }
 
 function dropDisc(col, elements) {
-    if (!isValidMove(col)) return;
+    if (!isValidMove(col) || isAnimating) return;
+    
+    // Remove highlight from previous last drop
+    if (lastDropPosition) {
+        const lastCell = document.querySelector(`[data-row="${lastDropPosition.row}"][data-col="${lastDropPosition.col}"]`);
+        if (lastCell) {
+            lastCell.classList.remove('last-drop');
+        }
+    }
     
     for (let row = 5; row >= 0; row--) {
         if (!boardState[row][col]) {
             const color = currentPlayer === player1Name ? 'blue' : 'green';
             boardState[row][col] = color;
             
-            // Force immediate update of the cell's class
+            // Force immediate update of the cell's class and add last-drop highlight
             const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-            cellElement.className = color;
+            cellElement.className = ''; // Clear existing classes
+            requestAnimationFrame(() => {
+                cellElement.classList.add(color);
+                cellElement.classList.add('last-drop');
+            });
             
+            // Store the last drop position
+            lastDropPosition = { row, col };
+            
+            isAnimating = true;
             updateBoard(elements);
             checkForMatches(elements);
             switchPlayer(elements);
             checkForEndGame(elements);
+            
+            // Reset animation lock after all animations complete
+            setTimeout(() => {
+                isAnimating = false;
+            }, 800); // Slightly longer than the animation duration to ensure all animations complete
             break;
         }
     }
@@ -237,16 +338,57 @@ function isValidMove(col) {
 }
 
 function updateBoard(elements) {
-    boardState.forEach((row, rowIndex) => {
-        row.forEach((cell, colIndex) => {
-            const cellElement = document.querySelector(`[data-row="${rowIndex}"][data-col="${colIndex}"]`);
-            if (cell) {
-                cellElement.className = cell;
-            } else {
-                cellElement.className = '';
+    let piecesDropped = false;
+    
+    // Remove any existing falling classes
+    document.querySelectorAll('.falling').forEach(cell => cell.classList.remove('falling'));
+    
+    // Start from the bottom row, excluding the last row
+    for (let row = ROWS - 2; row >= 0; row--) {
+        for (let col = 0; col < COLS; col++) {
+            if (boardState[row][col]) {
+                let currentRow = row;
+                // Check how many empty spaces are below
+                while (currentRow + 1 < ROWS && !boardState[currentRow + 1][col]) {
+                    isAnimating = true;
+                    // Move the piece down
+                    boardState[currentRow + 1][col] = boardState[currentRow][col];
+                    boardState[currentRow][col] = null;
+                    
+                    // Add falling animation class
+                    const targetCell = document.querySelector(`[data-row="${currentRow + 1}"][data-col="${col}"]`);
+                    targetCell.classList.add(boardState[currentRow + 1][col].toLowerCase(), 'falling');
+                    
+                    const sourceCell = document.querySelector(`[data-row="${currentRow}"][data-col="${col}"]`);
+                    sourceCell.classList.remove(boardState[currentRow + 1][col].toLowerCase());
+                    
+                    currentRow++;
+                    piecesDropped = true;
+                }
             }
-        });
-    });
+        }
+    }
+
+    // Update the visual board after all movements
+    for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS; col++) {
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            if (boardState[row][col]) {
+                cell.className = boardState[row][col].toLowerCase();
+            } else {
+                cell.className = '';
+            }
+        }
+    }
+
+    // If pieces were dropped, check for new matches after animation
+    if (piecesDropped) {
+        setTimeout(() => {
+            checkForMatches(elements);
+        }, 400);
+    } else {
+        isAnimating = false;
+    }
 }
 
 function cascadeTiles(elements) {
@@ -270,62 +412,147 @@ function cascadeTiles(elements) {
 }
 
 function checkForMatches(elements) {
-    const directions = [
-        { x: 1, y: 0 },  // Horizontal
-        { x: 0, y: 1 },  // Vertical
-        { x: 1, y: 1 },  // Diagonal down-right
-        { x: 1, y: -1 }  // Diagonal up-right
-    ];
-
-    function checkDirection(row, col, direction) {
-        const player = boardState[row][col];
-        if (!player) return false;
-
-        for (let i = 1; i < 4; i++) {
-            const newRow = row + direction.y * i;
-            const newCol = col + direction.x * i;
-
-            if (
-                newRow < 0 || newRow >= 6 ||
-                newCol < 0 || newCol >= 7 ||
-                boardState[newRow][newCol] !== player
-            ) {
-                return false;
+    let matchFound = false;
+    const matches = new Set(); // Using Set to avoid counting same position twice
+    
+    // Check horizontal matches
+    for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS - 3; col++) {
+            if (boardState[row][col]) {
+                let matchLength = 1;
+                let currentColor = boardState[row][col];
+                
+                // Count consecutive pieces of same color
+                while (col + matchLength < COLS && 
+                       boardState[row][col + matchLength] === currentColor) {
+                    matchLength++;
+                }
+                
+                // If we found 4 or more in a row, add all positions
+                if (matchLength >= 4) {
+                    matchFound = true;
+                    for (let i = 0; i < matchLength; i++) {
+                        matches.add(`${row},${col + i}`);
+                    }
+                }
             }
         }
-        return true;
     }
-
-    function clearDirection(row, col, direction) {
-        const player = boardState[row][col];
-        for (let i = 0; i < 4; i++) {
-            const newRow = row + direction.y * i;
-            const newCol = col + direction.x * i;
-            boardState[newRow][newCol] = null;
-        }
-        // Update score based on the color
-        scores[player] += 4;
-    }
-
-    let anyCleared = false;
-
-    for (let row = 0; row < 6; row++) {
-        for (let col = 0; col < 7; col++) {
-            directions.forEach(direction => {
-                if (checkDirection(row, col, direction)) {
-                    clearDirection(row, col, direction);
-                    anyCleared = true;
+    
+    // Check vertical matches
+    for (let row = 0; row < ROWS - 3; row++) {
+        for (let col = 0; col < COLS; col++) {
+            if (boardState[row][col]) {
+                let matchLength = 1;
+                let currentColor = boardState[row][col];
+                
+                // Count consecutive pieces of same color
+                while (row + matchLength < ROWS && 
+                       boardState[row + matchLength][col] === currentColor) {
+                    matchLength++;
                 }
-            });
+                
+                // If we found 4 or more in a row, add all positions
+                if (matchLength >= 4) {
+                    matchFound = true;
+                    for (let i = 0; i < matchLength; i++) {
+                        matches.add(`${row + i},${col}`);
+                    }
+                }
+            }
         }
     }
-
-    if (anyCleared) {
-        cascadeTiles(elements);
-        updateBoard(elements);
-        setTimeout(checkForMatches, 500, elements);
-        updateScores(elements);
+    
+    // Check diagonal matches (top-left to bottom-right)
+    for (let row = 0; row < ROWS - 3; row++) {
+        for (let col = 0; col < COLS - 3; col++) {
+            if (boardState[row][col]) {
+                let matchLength = 1;
+                let currentColor = boardState[row][col];
+                
+                // Count consecutive pieces of same color
+                while (row + matchLength < ROWS && 
+                       col + matchLength < COLS && 
+                       boardState[row + matchLength][col + matchLength] === currentColor) {
+                    matchLength++;
+                }
+                
+                // If we found 4 or more in a row, add all positions
+                if (matchLength >= 4) {
+                    matchFound = true;
+                    for (let i = 0; i < matchLength; i++) {
+                        matches.add(`${row + i},${col + i}`);
+                    }
+                }
+            }
+        }
     }
+    
+    // Check diagonal matches (top-right to bottom-left)
+    for (let row = 0; row < ROWS - 3; row++) {
+        for (let col = COLS - 1; col >= 3; col--) {
+            if (boardState[row][col]) {
+                let matchLength = 1;
+                let currentColor = boardState[row][col];
+                
+                // Count consecutive pieces of same color
+                while (row + matchLength < ROWS && 
+                       col - matchLength >= 0 && 
+                       boardState[row + matchLength][col - matchLength] === currentColor) {
+                    matchLength++;
+                }
+                
+                // If we found 4 or more in a row, add all positions
+                if (matchLength >= 4) {
+                    matchFound = true;
+                    for (let i = 0; i < matchLength; i++) {
+                        matches.add(`${row + i},${col - i}`);
+                    }
+                }
+            }
+        }
+    }
+    
+    if (matchFound) {
+        isAnimating = true;
+        
+        // Convert matches Set to array of positions
+        const matchPositions = Array.from(matches).map(pos => {
+            const [row, col] = pos.split(',').map(Number);
+            return [row, col];
+        });
+        
+        // Flash and update scores
+        matchPositions.forEach(([row, col]) => {
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            const color = boardState[row][col];
+            cell.classList.add('flash');
+            
+            // Update scores based on the color
+            if (color.toLowerCase() === 'blue') scores.blue++;
+            if (color.toLowerCase() === 'green') scores.green++;
+        });
+        
+        updateScores(elements);
+
+        // Clear matches after flash animation
+        setTimeout(() => {
+            matchPositions.forEach(([row, col]) => {
+                const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                boardState[row][col] = null;
+                cell.className = '';
+            });
+            
+            // Apply gravity after clearing matches
+            setTimeout(() => {
+                applyGravity(elements);
+            }, 50);
+        }, 750);
+    } else {
+        isAnimating = false;
+    }
+    
+    return matchFound;
 }
 
 function updateScores(elements) {
@@ -334,32 +561,80 @@ function updateScores(elements) {
 }
 
 function declareWinner(elements) {
+    // Create modal element
+    const modal = document.createElement('div');
+    modal.className = 'winner-modal';
+    
+    // Determine winner and set appropriate class
+    let winnerName;
     if (scores.blue > scores.green) {
-        alert(`Game Over! ${player1Name} wins!`);
+        winnerName = player1Name;
+        modal.classList.add('blue-wins');
     } else if (scores.green > scores.blue) {
-        alert(`Game Over! ${player2Name} wins!`);
-    } else {
-        alert('Game Over! It\'s a tie!');
+        winnerName = player2Name;
+        modal.classList.add('green-wins');
     }
+    
+    // Set modal content
+    modal.innerHTML = `
+        <h2>${winnerName ? 'Winner!' : 'Game Over!'}</h2>
+        <p>${winnerName ? `${winnerName} wins with a score of ${Math.max(scores.blue, scores.green)}!` : 'It\'s a tie!'}</p>
+        <p>Blue: ${scores.blue} | Green: ${scores.green}</p>
+        <div class="modal-buttons">
+            <button onclick="closeWinnerModal(this, 'restart')">Play Again</button>
+            <button onclick="closeWinnerModal(this, 'exit')">Exit to Menu</button>
+        </div>
+    `;
+    
+    // Add modal to body
+    document.body.appendChild(modal);
 }
+
+// Update close modal function to handle both restart and exit
+window.closeWinnerModal = function(button, action) {
+    const modal = button.closest('.winner-modal');
+    modal.style.opacity = '0';
+    
+    setTimeout(() => {
+        modal.remove();
+        if (action === 'restart') {
+            restartGame(document.querySelectorAll('[id]'));
+        } else if (action === 'exit') {
+            // Show start screen and hide game screen
+            document.getElementById('start-screen').classList.remove('hidden');
+            document.getElementById('game').classList.add('hidden');
+            // Reset the game state
+            restartGame(document.querySelectorAll('[id]'));
+        }
+    }, 500);
+};
 
 function switchPlayer(elements) {
     currentPlayer = currentPlayer === player1Name ? player2Name : player1Name;
     updateCurrentPlayerDisplay(elements);
     
     if (totalTurns !== 999) {
-        totalTurns--;
+        totalTurns = Math.max(0, totalTurns - 1);
         updateTurns(elements);
+        
+        if (totalTurns === 0) {
+            setTimeout(() => {
+                declareWinner(elements);
+                restartGame(elements);
+            }, 500);
+            return;
+        }
     }
     
-    // Handle AI turn
-    if (isAIMode && currentPlayer === player2Name) {
-        console.log('AI turn starting');
-        isAITurn = true;
-        // Add a small delay before AI move
+    // Handle AI moves with proper delay
+    if ((isAIMode && currentPlayer === player2Name) || 
+        (isAIvsAI && (currentPlayer === 'AI 1' || currentPlayer === 'AI 2'))) {
         setTimeout(() => {
-            if (isAITurn && currentPlayer === player2Name) {
+            if (!isAnimating) {
                 makeAIMove(elements);
+            } else {
+                // If still animating, try again after a short delay
+                setTimeout(() => makeAIMove(elements), 500);
             }
         }, 1000);
     }
@@ -377,6 +652,14 @@ function checkForEndGame(elements) {
 }
 
 function restartGame(elements) {
+    if (lastDropPosition) {
+        const lastCell = document.querySelector(`[data-row="${lastDropPosition.row}"][data-col="${lastDropPosition.col}"]`);
+        if (lastCell) {
+            lastCell.classList.remove('last-drop');
+        }
+    }
+    lastDropPosition = null;
+    
     boardState.forEach(row => row.fill(null));
     scores = { blue: 0, green: 0 };
     updateBoard(elements);
@@ -385,11 +668,9 @@ function restartGame(elements) {
     const selectedRounds = document.getElementById('rounds').value;
     if (selectedRounds === 'unlimited') {
         totalTurns = 999;
-        // Hide turn counters in unlimited mode
         document.querySelectorAll('.turns-left').forEach(el => el.style.display = 'none');
     } else {
         totalTurns = parseInt(selectedRounds) * 2;
-        // Show turn counters in regular mode
         document.querySelectorAll('.turns-left').forEach(el => el.style.display = 'block');
     }
     updateTurns(elements);
@@ -425,13 +706,29 @@ function loadGameState(elements) {
 }
 
 function makeAIMove(elements) {
-    if (!isAITurn || currentPlayer !== player2Name) {
-        console.log('Not AI turn or not AI player');
+    if ((!isAIMode && !isAIvsAI) || isAnimating) {
+        return;
+    }
+
+    // Check if it's an AI's turn
+    const isAITurn = (isAIMode && currentPlayer === player2Name) || 
+                    (isAIvsAI && (currentPlayer === 'AI 1' || currentPlayer === 'AI 2'));
+    
+    if (!isAITurn) {
         return;
     }
 
     console.log('AI making move...');
-    let col = calculateAIMove(elements);
+    let currentAIDifficulty;
+    
+    if (isAIvsAI) {
+        currentAIDifficulty = currentPlayer === 'AI 1' ? ai1Difficulty : ai2Difficulty;
+    } else {
+        currentAIDifficulty = ai2Difficulty;
+    }
+    
+    console.log('Using AI difficulty:', currentAIDifficulty);
+    let col = calculateAIMove(elements, currentAIDifficulty);
     
     // Ensure we have a valid move
     if (col === null || !isValidMove(col)) {
@@ -448,20 +745,18 @@ function makeAIMove(elements) {
     // Make the move if we have a valid column
     if (col !== null && isValidMove(col)) {
         console.log('AI moving to column:', col);
-        isAITurn = false;
         dropDisc(col, elements);
-    } else {
-        console.log('AI could not find a valid move');
     }
 }
 
-function calculateAIMove(elements) {
-    switch(aiDifficulty) {
-        case 'easy':
+function calculateAIMove(elements, difficulty = 'medium') {
+    // Map the difficulty to the internal values
+    switch(difficulty) {
+        case 'easy': // Baby
             return calculateEasyAIMove(elements);
-        case 'medium':
+        case 'medium': // Adolescent
             return calculateMediumAIMove(elements);
-        case 'hard':
+        case 'hard': // Einstein
             return calculateHardAIMove(elements);
         default:
             return calculateMediumAIMove(elements);
@@ -469,15 +764,46 @@ function calculateAIMove(elements) {
 }
 
 function calculateEasyAIMove(elements) {
-    // Random valid move
-    const validColumns = [];
-    for (let col = 0; col < COLS; col++) {
-        if (!boardState[0][col]) validColumns.push(col);
+    // Baby AI: 70% chance to make a random move
+    if (Math.random() < 0.7) {
+        const validColumns = [];
+        for (let col = 0; col < COLS; col++) {
+            if (!boardState[0][col]) validColumns.push(col);
+        }
+        return validColumns[Math.floor(Math.random() * validColumns.length)];
     }
-    return validColumns[Math.floor(Math.random() * validColumns.length)];
+    
+    // 30% chance to make a slightly better move
+    let bestCol = 3;
+    let bestScore = -Infinity;
+    
+    for (let col = 0; col < COLS; col++) {
+        const row = getLowestEmptyRow(col);
+        if (row === -1) continue;
+        
+        let score = 0;
+        
+        // Slightly prefer center columns
+        score += (7 - Math.abs(3 - col));
+        
+        // Check for immediate wins
+        boardState[row][col] = 'green';
+        if (checkWinningMove(row, col, 'green')) {
+            score += 100;
+        }
+        boardState[row][col] = null;
+        
+        if (score > bestScore) {
+            bestScore = score;
+            bestCol = col;
+        }
+    }
+    
+    return bestCol;
 }
 
 function calculateMediumAIMove(elements) {
+    // Adolescent AI: Checks for immediate wins and blocks
     // Check for winning move
     for (let col = 0; col < COLS; col++) {
         const row = getLowestEmptyRow(col);
@@ -504,32 +830,35 @@ function calculateMediumAIMove(elements) {
         }
     }
 
-    // Try to create a potential winning move
+    // Simple scoring system for adolescent difficulty
+    let bestScore = -Infinity;
+    let bestCol = 3;
+    
     for (let col = 0; col < COLS; col++) {
         const row = getLowestEmptyRow(col);
-        if (row !== -1) {
-            // Check if this move creates a potential winning situation
-            boardState[row][col] = 'green';
-            let threats = countThreats('green');
-            boardState[row][col] = null;
-            
-            if (threats > 0) {
-                return col;
-            }
+        if (row === -1) continue;
+        
+        let score = 0;
+        
+        // Prefer center columns
+        score += (7 - Math.abs(3 - col)) * 2;
+        
+        // Check for potential threats
+        boardState[row][col] = 'green';
+        score += countThreats('green') * 5;
+        boardState[row][col] = null;
+        
+        if (score > bestScore) {
+            bestScore = score;
+            bestCol = col;
         }
     }
-
-    // If no strategic move found, prefer center columns
-    const centerPriority = [3, 2, 4, 1, 5, 0, 6];
-    for (const col of centerPriority) {
-        if (getLowestEmptyRow(col) !== -1) return col;
-    }
-
-    // Fallback to random move
-    return calculateEasyAIMove(elements);
+    
+    return bestCol;
 }
 
 function calculateHardAIMove(elements) {
+    // Einstein AI: Advanced strategy with multiple levels of analysis
     // First check for immediate win
     for (let col = 0; col < COLS; col++) {
         const row = getLowestEmptyRow(col);
@@ -556,30 +885,74 @@ function calculateHardAIMove(elements) {
         }
     }
 
-    // Look for moves that create multiple threats
-    let bestCol = null;
-    let maxThreats = -1;
-
+    // Evaluate each possible move with a complex scoring system
+    let bestScore = -Infinity;
+    let bestCol = 3;
+    
     for (let col = 0; col < COLS; col++) {
         const row = getLowestEmptyRow(col);
-        if (row !== -1) {
-            boardState[row][col] = 'green';
-            const threats = countThreats('green');
-            boardState[row][col] = null;
-
-            if (threats > maxThreats) {
-                maxThreats = threats;
-                bestCol = col;
+        if (row === -1) continue;
+        
+        let score = 0;
+        
+        // Try the move
+        boardState[row][col] = 'green';
+        
+        // Score based on number of threats created
+        score += countThreats('green') * 10;
+        
+        // Score based on preventing opponent threats
+        boardState[row][col] = 'blue';
+        score += countThreats('blue') * 8;
+        
+        // Score based on position (center columns are better)
+        score += (7 - Math.abs(3 - col)) * 3;
+        
+        // Score based on vertical stacking potential
+        if (row < ROWS - 1 && boardState[row + 1][col]) {
+            score += 2;
+        }
+        
+        // Check if this move enables a winning move for opponent on top
+        if (row > 0) {
+            boardState[row - 1][col] = 'blue';
+            if (checkWinningMove(row - 1, col, 'blue')) {
+                score -= 15;
+            }
+            boardState[row - 1][col] = null;
+        }
+        
+        // Check for double threat creation (two winning possibilities)
+        boardState[row][col] = 'green';
+        const threats = countThreats('green');
+        if (threats >= 2) {
+            score += 20;
+        }
+        
+        // Check for potential trap setups
+        for (let trapCol = 0; trapCol < COLS; trapCol++) {
+            if (trapCol === col) continue;
+            const trapRow = getLowestEmptyRow(trapCol);
+            if (trapRow !== -1) {
+                boardState[trapRow][trapCol] = 'green';
+                if (countThreats('green') >= 2) {
+                    score += 15;
+                }
+                boardState[trapRow][trapCol] = null;
             }
         }
+        
+        // Reset the cell
+        boardState[row][col] = null;
+        
+        // Update best move if this score is higher
+        if (score > bestScore) {
+            bestScore = score;
+            bestCol = col;
+        }
     }
-
-    if (bestCol !== null) {
-        return bestCol;
-    }
-
-    // If no good strategic move, use medium strategy
-    return calculateMediumAIMove(elements);
+    
+    return bestCol;
 }
 
 function getLowestEmptyRow(col) {
@@ -642,4 +1015,61 @@ function countThreats(player) {
     }
     return threats;
 }
+
+function applyGravity(elements) {
+    let piecesFell = false;
+    
+    // Process columns from bottom to top
+    for (let col = 0; col < COLS; col++) {
+        // Collect non-null pieces in the column
+        let pieces = [];
+        for (let row = ROWS - 1; row >= 0; row--) {
+            if (boardState[row][col]) {
+                pieces.push(boardState[row][col]);
+                boardState[row][col] = null;
+            }
+        }
+        
+        // Place pieces back from bottom up
+        let currentRow = ROWS - 1;
+        while (pieces.length > 0 && currentRow >= 0) {
+            boardState[currentRow][col] = pieces.shift();
+            currentRow--;
+        }
+    }
+    
+    // Update the visual board
+    for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS; col++) {
+            const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            if (cell) {
+                cell.className = boardState[row][col] ? boardState[row][col].toLowerCase() : '';
+            }
+        }
+    }
+    
+    // Check for new matches after a brief delay
+    setTimeout(() => {
+        checkForMatches(elements);
+    }, 300);
+}
+
+// Add CSS for falling animation if not already present
+const style = document.createElement('style');
+style.textContent = `
+.falling {
+    animation: fall 0.3s ease-in;
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}`;
+document.head.appendChild(style);
 
