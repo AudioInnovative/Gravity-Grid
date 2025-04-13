@@ -766,15 +766,64 @@ a:hover .side-logo {
     
     #game {
         margin: 0 auto;
-        padding: 10px 5px;
+        padding: 5px;
+        max-width: 100%;
+    }
+    
+    #board {
+        max-width: 95%;
+        gap: 2px;
+        padding: 4px;
     }
     
     .screen {
         padding: 5px;
+        margin-top: 60px;
     }
     
     .music-button {
         top: 10px;
         right: 10px;
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    #info {
+        max-width: 95%;
+        padding: 4px;
+        margin: 8px auto;
+    }
+
+    .player-info {
+        margin: 0 8px;
+        flex: 0 0 auto;
+    }
+
+    input[type="text"],
+    select {
+        max-width: 120px;
+    }
+}
+
+@media screen and (max-width: 380px) {
+    #board {
+        max-width: 98%;
+        gap: 1px;
+        padding: 2px;
+    }
+
+    #board div {
+        border-width: 1px;
+    }
+
+    .screen {
+        margin-top: 50px;
+    }
+
+    .music-button {
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
     }
 }
