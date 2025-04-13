@@ -778,15 +778,26 @@ a:hover .side-logo {
     
     .screen {
         padding: 5px;
-        margin-top: 60px;
+        margin-top: 10px;
     }
     
     .music-button {
-        top: 10px;
-        right: 10px;
+        top: auto;
+        bottom: 20px;
+        right: 20px;
         width: 40px;
         height: 40px;
         font-size: 20px;
+    }
+
+    .music-button::before {
+        width: 50px;
+        height: 50px;
+    }
+
+    .music-button:hover::before {
+        width: 60px;
+        height: 60px;
     }
 
     #info {
@@ -818,12 +829,24 @@ a:hover .side-logo {
     }
 
     .screen {
-        margin-top: 50px;
+        margin-top: 10px;
     }
 
     .music-button {
+        bottom: 15px;
+        right: 15px;
         width: 35px;
         height: 35px;
         font-size: 18px;
+    }
+
+    .music-button::before {
+        width: 45px;
+        height: 45px;
+    }
+
+    .music-button:hover::before {
+        width: 55px;
+        height: 55px;
     }
 }
